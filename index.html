@@ -12,6 +12,9 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -35,9 +38,34 @@
       }
     }
 
-    .sub-subject {
+    .sub-subject-input {
       font-size: 0.75rem;
-      color: #64748b;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 1rem;
+      max-width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
     }
   </style>
 </head>
@@ -51,8 +79,8 @@
         <div id="syncStatus" class="mt-2 text-sm text-slate-500">Yükleniyor...</div>
       </div>
 
-      <!-- İstatistikler -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- İstatistikler ve Grafik Butonu -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bg-white p-6 rounded-xl shadow-lg">
           <p class="text-sm text-green-600 mb-1">En Yüksek Net</p>
           <p class="text-3xl font-bold text-green-700" id="highestNet">0.00</p>
@@ -60,6 +88,12 @@
         <div class="bg-white p-6 rounded-xl shadow-lg">
           <p class="text-sm text-blue-600 mb-1">Ortalama Net</p>
           <p class="text-3xl font-bold text-blue-700" id="averageNet">0.00</p>
+        </div>
+        <div
+          class="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg cursor-pointer hover:shadow-xl transition"
+          onclick="openChartModal()">
+          <p class="text-sm text-white mb-1">📊 Grafikler</p>
+          <p class="text-2xl font-bold text-white">Gelişim Analizi</p>
         </div>
       </div>
 
@@ -83,7 +117,7 @@
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Türkçe (40 soru) -->
             <div class="p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Türkçe <span class="sub-subject">(40 soru)</span></h3>
+              <h3 class="font-semibold mb-3">Türkçe <span class="text-xs text-slate-600">(40 soru)</span></h3>
               <div class="grid grid-cols-3 gap-3">
                 <div>
                   <label class="block text-xs mb-1">Doğru</label>
@@ -105,30 +139,56 @@
 
             <!-- Sosyal Bilimler (20 soru) -->
             <div class="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Sosyal Bilimler <span class="sub-subject">(20 soru)</span></h3>
-              <div class="text-xs text-slate-600 mb-2">Tarih 5, Coğrafya 5, Felsefe 5, Din 5</div>
-              <div class="grid grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-xs mb-1">Doğru</label>
-                  <input type="number" min="0" max="20" value="0" id="sosyalD"
-                    class="w-full px-2 py-2 border rounded-lg text-center">
+              <h3 class="font-semibold mb-3">Sosyal Bilimler <span class="text-xs text-slate-600">(20 soru)</span></h3>
+              <div class="space-y-2 mb-3">
+                <!-- Tarih -->
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <label class="text-slate-600">Tarih (5)</label>
+                  <input type="number" min="0" max="5" value="0" id="tarihD" placeholder="D"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
+                  <input type="number" min="0" max="5" value="0" id="tarihY" placeholder="Y"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
                 </div>
-                <div>
-                  <label class="block text-xs mb-1">Yanlış</label>
-                  <input type="number" min="0" max="20" value="0" id="sosyalY"
-                    class="w-full px-2 py-2 border rounded-lg text-center">
+                <!-- Coğrafya -->
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <label class="text-slate-600">Coğrafya (5)</label>
+                  <input type="number" min="0" max="5" value="0" id="cografyaD" placeholder="D"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
+                  <input type="number" min="0" max="5" value="0" id="cografyaY" placeholder="Y"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
                 </div>
-                <div>
-                  <label class="block text-xs mb-1">Net</label>
-                  <div id="sosyalNet" class="px-2 py-2 bg-slate-100 rounded-lg text-center font-bold text-blue-700">0.00
-                  </div>
+                <!-- Felsefe -->
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <label class="text-slate-600">Felsefe (5)</label>
+                  <input type="number" min="0" max="5" value="0" id="felsefeD" placeholder="D"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
+                  <input type="number" min="0" max="5" value="0" id="felsefeY" placeholder="Y"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
+                </div>
+                <!-- Din -->
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <label class="text-slate-600">Din (5)</label>
+                  <input type="number" min="0" max="5" value="0" id="dinD" placeholder="D"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
+                  <input type="number" min="0" max="5" value="0" id="dinY" placeholder="Y"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-3 pt-2 border-t">
+                <div class="text-xs font-semibold">Toplam</div>
+                <div id="sosyalD" class="text-center font-bold text-yellow-700">0</div>
+                <div id="sosyalY" class="text-center font-bold text-yellow-700">0</div>
+              </div>
+              <div class="mt-2 text-center">
+                <div class="text-xs mb-1">Net</div>
+                <div id="sosyalNet" class="px-2 py-2 bg-slate-100 rounded-lg text-center font-bold text-blue-700">0.00
                 </div>
               </div>
             </div>
 
             <!-- Matematik (40 soru) -->
             <div class="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Matematik <span class="sub-subject">(40 soru)</span></h3>
+              <h3 class="font-semibold mb-3">Matematik <span class="text-xs text-slate-600">(40 soru)</span></h3>
               <div class="grid grid-cols-3 gap-3">
                 <div>
                   <label class="block text-xs mb-1">Doğru</label>
@@ -150,23 +210,41 @@
 
             <!-- Fen Bilimleri (20 soru) -->
             <div class="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Fen Bilimleri <span class="sub-subject">(20 soru)</span></h3>
-              <div class="text-xs text-slate-600 mb-2">Fizik 7, Kimya 7, Biyoloji 6</div>
-              <div class="grid grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-xs mb-1">Doğru</label>
-                  <input type="number" min="0" max="20" value="0" id="fenD"
-                    class="w-full px-2 py-2 border rounded-lg text-center">
+              <h3 class="font-semibold mb-3">Fen Bilimleri <span class="text-xs text-slate-600">(20 soru)</span></h3>
+              <div class="space-y-2 mb-3">
+                <!-- Fizik -->
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <label class="text-slate-600">Fizik (7)</label>
+                  <input type="number" min="0" max="7" value="0" id="fizikD" placeholder="D"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
+                  <input type="number" min="0" max="7" value="0" id="fizikY" placeholder="Y"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
                 </div>
-                <div>
-                  <label class="block text-xs mb-1">Yanlış</label>
-                  <input type="number" min="0" max="20" value="0" id="fenY"
-                    class="w-full px-2 py-2 border rounded-lg text-center">
+                <!-- Kimya -->
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <label class="text-slate-600">Kimya (7)</label>
+                  <input type="number" min="0" max="7" value="0" id="kimyaD" placeholder="D"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
+                  <input type="number" min="0" max="7" value="0" id="kimyaY" placeholder="Y"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
                 </div>
-                <div>
-                  <label class="block text-xs mb-1">Net</label>
-                  <div id="fenNet" class="px-2 py-2 bg-slate-100 rounded-lg text-center font-bold text-blue-700">0.00
-                  </div>
+                <!-- Biyoloji -->
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <label class="text-slate-600">Biyoloji (6)</label>
+                  <input type="number" min="0" max="6" value="0" id="biyolojiD" placeholder="D"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
+                  <input type="number" min="0" max="6" value="0" id="biyolojiY" placeholder="Y"
+                    class="px-2 py-1 border rounded text-center sub-subject-input">
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-3 pt-2 border-t">
+                <div class="text-xs font-semibold">Toplam</div>
+                <div id="fenD" class="text-center font-bold text-green-700">0</div>
+                <div id="fenY" class="text-center font-bold text-green-700">0</div>
+              </div>
+              <div class="mt-2 text-center">
+                <div class="text-xs mb-1">Net</div>
+                <div id="fenNet" class="px-2 py-2 bg-slate-100 rounded-lg text-center font-bold text-blue-700">0.00
                 </div>
               </div>
             </div>
@@ -195,12 +273,35 @@
     </div>
   </div>
 
+  <!-- Grafik Modal -->
+  <div id="chartModal" class="modal">
+    <div class="modal-content" style="max-width: 1200px;">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">📊 Gelişim Grafikleri</h2>
+        <button onclick="closeChartModal()" class="text-slate-500 hover:text-slate-700 text-2xl">&times;</button>
+      </div>
+
+      <div class="space-y-8">
+        <!-- Net Gelişim Grafiği -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Net Gelişim Grafiği</h3>
+          <canvas id="netChart"></canvas>
+        </div>
+
+        <!-- Doğru/Yanlış Grafiği -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Doğru/Yanlış Dağılımı</h3>
+          <canvas id="correctWrongChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Firebase yapılandırması
     const firebaseConfig = {
       apiKey: "AIzaSyCrHZgNwjCqXMXj5Hes2bAP0O2ihQIKoCE",
       authDomain: "yks-2026-1278b.firebaseapp.com",
@@ -211,14 +312,12 @@
       measurementId: "G-TQV1KD6JNN"
     };
 
-    // Firebase'i başlat
     let app, db;
     let useFirebase = true;
 
     try {
       app = initializeApp(firebaseConfig);
       db = getFirestore(app);
-      console.log("Firebase başlatıldı");
     } catch (error) {
       console.error("Firebase başlatma hatası:", error);
       useFirebase = false;
@@ -232,25 +331,49 @@
       return Math.max(0, dogru - (yanlis / 4)).toFixed(2);
     }
 
+    // Alt derslerin toplamını hesapla
+    function updateSubjectTotals() {
+      // Sosyal Bilimler
+      const sosyalD = ['tarih', 'cografya', 'felsefe', 'din'].reduce((sum, sub) =>
+        sum + (parseInt(document.getElementById(sub + 'D').value) || 0), 0);
+      const sosyalY = ['tarih', 'cografya', 'felsefe', 'din'].reduce((sum, sub) =>
+        sum + (parseInt(document.getElementById(sub + 'Y').value) || 0), 0);
+
+      document.getElementById('sosyalD').textContent = sosyalD;
+      document.getElementById('sosyalY').textContent = sosyalY;
+      document.getElementById('sosyalNet').textContent = calculateNet(sosyalD, sosyalY);
+
+      // Fen Bilimleri
+      const fenD = ['fizik', 'kimya', 'biyoloji'].reduce((sum, sub) =>
+        sum + (parseInt(document.getElementById(sub + 'D').value) || 0), 0);
+      const fenY = ['fizik', 'kimya', 'biyoloji'].reduce((sum, sub) =>
+        sum + (parseInt(document.getElementById(sub + 'Y').value) || 0), 0);
+
+      document.getElementById('fenD').textContent = fenD;
+      document.getElementById('fenY').textContent = fenY;
+      document.getElementById('fenNet').textContent = calculateNet(fenD, fenY);
+    }
+
     // Net değerlerini güncelle
     function updateNets() {
-      const subjects = ['turkce', 'sosyal', 'matematik', 'fen'];
-      subjects.forEach(subject => {
+      // Türkçe ve Matematik
+      ['turkce', 'matematik'].forEach(subject => {
         const dogru = parseInt(document.getElementById(subject + 'D').value) || 0;
         const yanlis = parseInt(document.getElementById(subject + 'Y').value) || 0;
         document.getElementById(subject + 'Net').textContent = calculateNet(dogru, yanlis);
       });
+
+      // Alt dersler
+      updateSubjectTotals();
     }
 
-    // Input değişikliklerini dinle
+    // Tüm input değişikliklerini dinle
     document.querySelectorAll('input[type="number"]').forEach(input => {
       input.addEventListener('input', updateNets);
     });
 
-    // Tarihi bugün olarak ayarla
     document.getElementById('examDate').valueAsDate = new Date();
 
-    // İstatistikleri güncelle
     function updateStats() {
       if (exams.length === 0) {
         document.getElementById('highestNet').textContent = '0.00';
@@ -266,7 +389,6 @@
       document.getElementById('averageNet').textContent = average;
     }
 
-    // Sınav listesini göster
     function renderExams() {
       const listEl = document.getElementById('examList');
       const emptyEl = document.getElementById('emptyState');
@@ -300,10 +422,9 @@
             `).join('');
     }
 
-    // Firebase'den veri yükle
     async function loadExams() {
       if (!useFirebase) {
-        syncStatus.innerHTML = '⚠️ Çevrimdışı mod - localStorage kullanılıyor';
+        syncStatus.innerHTML = '⚠️ Çevrimdışı mod';
         const savedExams = localStorage.getItem('yks-exams');
         if (savedExams) {
           exams = JSON.parse(savedExams);
@@ -314,7 +435,7 @@
       }
 
       try {
-        syncStatus.innerHTML = '<div class="loading"></div> Veriler yükleniyor...';
+        syncStatus.innerHTML = '<div class="loading"></div> Yükleniyor...';
         const q = query(collection(db, 'exams'), orderBy('date', 'asc'));
         const querySnapshot = await getDocs(q);
 
@@ -329,7 +450,7 @@
         updateStats();
       } catch (error) {
         console.error("Firebase hatası:", error);
-        syncStatus.innerHTML = '⚠️ Firebase bağlantı hatası - localStorage kullanılıyor';
+        syncStatus.innerHTML = '⚠️ Çevrimdışı mod';
 
         const savedExams = localStorage.getItem('yks-exams');
         if (savedExams) {
@@ -340,7 +461,6 @@
       }
     }
 
-    // Sınav sil
     window.deleteExam = async function (id) {
       if (!confirm('Bu sınavı silmek istediğinizden emin misiniz?')) {
         return;
@@ -348,7 +468,6 @@
 
       try {
         if (useFirebase) {
-          syncStatus.innerHTML = '<div class="loading"></div> Siliniyor...';
           await deleteDoc(doc(db, 'exams', id));
           await loadExams();
         } else {
@@ -359,12 +478,10 @@
         }
       } catch (error) {
         console.error("Silme hatası:", error);
-        alert('Sınav silinirken bir hata oluştu: ' + error.message);
-        syncStatus.innerHTML = '⚠️ Hata oluştu';
+        alert('Hata: ' + error.message);
       }
     };
 
-    // Form gönderimi
     document.getElementById('examForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
@@ -372,15 +489,67 @@
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<div class="loading"></div> Kaydediliyor...';
 
+      // Alt dersleri topla
+      const sosyalD = parseInt(document.getElementById('sosyalD').textContent);
+      const sosyalY = parseInt(document.getElementById('sosyalY').textContent);
+      const fenD = parseInt(document.getElementById('fenD').textContent);
+      const fenY = parseInt(document.getElementById('fenY').textContent);
+
       const newExam = {
         id: Date.now(),
         date: document.getElementById('examDate').value,
         name: document.getElementById('examName').value,
         nets: {
           turkce: parseFloat(document.getElementById('turkceNet').textContent),
-          sosyal: parseFloat(document.getElementById('sosyalNet').textContent),
+          sosyal: parseFloat(calculateNet(sosyalD, sosyalY)),
           matematik: parseFloat(document.getElementById('matematikNet').textContent),
-          fen: parseFloat(document.getElementById('fenNet').textContent)
+          fen: parseFloat(calculateNet(fenD, fenY))
+        },
+        details: {
+          turkce: {
+            dogru: parseInt(document.getElementById('turkceD').value) || 0,
+            yanlis: parseInt(document.getElementById('turkceY').value) || 0
+          },
+          matematik: {
+            dogru: parseInt(document.getElementById('matematikD').value) || 0,
+            yanlis: parseInt(document.getElementById('matematikY').value) || 0
+          },
+          sosyal: {
+            dogru: sosyalD,
+            yanlis: sosyalY,
+            tarih: {
+              dogru: parseInt(document.getElementById('tarihD').value) || 0,
+              yanlis: parseInt(document.getElementById('tarihY').value) || 0
+            },
+            cografya: {
+              dogru: parseInt(document.getElementById('cografyaD').value) || 0,
+              yanlis: parseInt(document.getElementById('cografyaY').value) || 0
+            },
+            felsefe: {
+              dogru: parseInt(document.getElementById('felsefeD').value) || 0,
+              yanlis: parseInt(document.getElementById('felsefeY').value) || 0
+            },
+            din: {
+              dogru: parseInt(document.getElementById('dinD').value) || 0,
+              yanlis: parseInt(document.getElementById('dinY').value) || 0
+            }
+          },
+          fen: {
+            dogru: fenD,
+            yanlis: fenY,
+            fizik: {
+              dogru: parseInt(document.getElementById('fizikD').value) || 0,
+              yanlis: parseInt(document.getElementById('fizikY').value) || 0
+            },
+            kimya: {
+              dogru: parseInt(document.getElementById('kimyaD').value) || 0,
+              yanlis: parseInt(document.getElementById('kimyaY').value) || 0
+            },
+            biyoloji: {
+              dogru: parseInt(document.getElementById('biyolojiD').value) || 0,
+              yanlis: parseInt(document.getElementById('biyolojiY').value) || 0
+            }
+          }
         }
       };
 
@@ -388,9 +557,7 @@
 
       try {
         if (useFirebase) {
-          syncStatus.innerHTML = '<div class="loading"></div> Firebase\'e kaydediliyor...';
-          const docRef = await addDoc(collection(db, 'exams'), newExam);
-          console.log("Firebase'e kaydedildi, ID:", docRef.id);
+          await addDoc(collection(db, 'exams'), newExam);
           await loadExams();
         } else {
           exams.push(newExam);
@@ -406,15 +573,157 @@
         alert('Sınav başarıyla kaydedildi!');
       } catch (error) {
         console.error("Kaydetme hatası:", error);
-        alert('Hata: ' + error.message + '\n\nFirestore kurallarınızı kontrol edin!');
-        syncStatus.innerHTML = '⚠️ Kaydetme hatası';
+        alert('Hata: ' + error.message);
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Sınavı Kaydet';
       }
     });
 
-    // İlk yükleme
+    // Grafik Modal Fonksiyonları
+    let netChart, correctWrongChart;
+
+    window.openChartModal = function () {
+      if (exams.length === 0) {
+        alert('Grafik göstermek için en az bir sınav eklemelisiniz!');
+        return;
+      }
+
+      document.getElementById('chartModal').classList.add('active');
+      setTimeout(() => {
+        createCharts();
+      }, 100);
+    };
+
+    window.closeChartModal = function () {
+      document.getElementById('chartModal').classList.remove('active');
+      if (netChart) netChart.destroy();
+      if (correctWrongChart) correctWrongChart.destroy();
+    };
+
+    function createCharts() {
+      const dates = exams.map(e => new Date(e.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }));
+
+      // Net Gelişim Grafiği
+      const netCtx = document.getElementById('netChart').getContext('2d');
+      if (netChart) netChart.destroy();
+
+      netChart = new Chart(netCtx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: 'Türkçe',
+              data: exams.map(e => e.nets.turkce),
+              borderColor: 'rgb(239, 68, 68)',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              tension: 0.4
+            },
+            {
+              label: 'Sosyal',
+              data: exams.map(e => e.nets.sosyal),
+              borderColor: 'rgb(234, 179, 8)',
+              backgroundColor: 'rgba(234, 179, 8, 0.1)',
+              tension: 0.4
+            },
+            {
+              label: 'Matematik',
+              data: exams.map(e => e.nets.matematik),
+              borderColor: 'rgb(59, 130, 246)',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4
+            },
+            {
+              label: 'Fen',
+              data: exams.map(e => e.nets.fen),
+              borderColor: 'rgb(34, 197, 94)',
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
+              tension: 0.4
+            },
+            {
+              label: 'Toplam',
+              data: exams.map(e => parseFloat(e.totalNet)),
+              borderColor: 'rgb(168, 85, 247)',
+              backgroundColor: 'rgba(168, 85, 247, 0.1)',
+              borderWidth: 3,
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: 'Dersler Bazında Net Gelişimi'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      // Doğru/Yanlış Grafiği
+      const cwCtx = document.getElementById('correctWrongChart').getContext('2d');
+      if (correctWrongChart) correctWrongChart.destroy();
+
+      const lastExam = exams[exams.length - 1];
+      if (lastExam.details) {
+        correctWrongChart = new Chart(cwCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Türkçe', 'Sosyal', 'Matematik', 'Fen'],
+            datasets: [
+              {
+                label: 'Doğru',
+                data: [
+                  lastExam.details.turkce.dogru,
+                  lastExam.details.sosyal.dogru,
+                  lastExam.details.matematik.dogru,
+                  lastExam.details.fen.dogru
+                ],
+                backgroundColor: 'rgba(34, 197, 94, 0.7)'
+              },
+              {
+                label: 'Yanlış',
+                data: [
+                  lastExam.details.turkce.yanlis,
+                  lastExam.details.sosyal.yanlis,
+                  lastExam.details.matematik.yanlis,
+                  lastExam.details.fen.yanlis
+                ],
+                backgroundColor: 'rgba(239, 68, 68, 0.7)'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'top',
+              },
+              title: {
+                display: true,
+                text: 'Son Sınav - Doğru/Yanlış Dağılımı'
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      }
+    }
+
     loadExams();
     updateNets();
   </script>
