@@ -21,9 +21,9 @@
 
     .loading {
       display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(59, 130, 246, 0.3);
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(59, 130, 246, 0.3);
       border-radius: 50%;
       border-top-color: #3b82f6;
       animation: spin 1s ease-in-out infinite;
@@ -34,6 +34,11 @@
         transform: rotate(360deg);
       }
     }
+
+    .sub-subject {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
   </style>
 </head>
 
@@ -43,7 +48,7 @@
       <div class="text-center mb-8">
         <h1 class="text-4xl font-bold text-blue-700 mb-2">YKS (TYT) Net Takip Sistemi</h1>
         <p class="text-slate-600">Sınav performansınızı takip edin</p>
-        <div id="syncStatus" class="mt-2 text-sm text-slate-500"></div>
+        <div id="syncStatus" class="mt-2 text-sm text-slate-500">Yükleniyor...</div>
       </div>
 
       <!-- İstatistikler -->
@@ -70,24 +75,24 @@
             </div>
             <div>
               <label class="block text-sm font-semibold mb-2">Sınav Adı</label>
-              <input type="text" id="examName" placeholder="Örn: TYT Deneme 1" required
+              <input type="text" id="examName" placeholder="Örn: TYT Deneme 1 - Acil Yayınları" required
                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Türkçe -->
+            <!-- Türkçe (40 soru) -->
             <div class="p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Türkçe</h3>
+              <h3 class="font-semibold mb-3">Türkçe <span class="sub-subject">(40 soru)</span></h3>
               <div class="grid grid-cols-3 gap-3">
                 <div>
                   <label class="block text-xs mb-1">Doğru</label>
-                  <input type="number" min="0" value="0" id="turkceD"
+                  <input type="number" min="0" max="40" value="0" id="turkceD"
                     class="w-full px-2 py-2 border rounded-lg text-center">
                 </div>
                 <div>
                   <label class="block text-xs mb-1">Yanlış</label>
-                  <input type="number" min="0" value="0" id="turkceY"
+                  <input type="number" min="0" max="40" value="0" id="turkceY"
                     class="w-full px-2 py-2 border rounded-lg text-center">
                 </div>
                 <div>
@@ -98,18 +103,19 @@
               </div>
             </div>
 
-            <!-- Sosyal -->
+            <!-- Sosyal Bilimler (20 soru) -->
             <div class="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Sosyal Bilimler</h3>
+              <h3 class="font-semibold mb-3">Sosyal Bilimler <span class="sub-subject">(20 soru)</span></h3>
+              <div class="text-xs text-slate-600 mb-2">Tarih 5, Coğrafya 5, Felsefe 5, Din 5</div>
               <div class="grid grid-cols-3 gap-3">
                 <div>
                   <label class="block text-xs mb-1">Doğru</label>
-                  <input type="number" min="0" value="0" id="sosyalD"
+                  <input type="number" min="0" max="20" value="0" id="sosyalD"
                     class="w-full px-2 py-2 border rounded-lg text-center">
                 </div>
                 <div>
                   <label class="block text-xs mb-1">Yanlış</label>
-                  <input type="number" min="0" value="0" id="sosyalY"
+                  <input type="number" min="0" max="20" value="0" id="sosyalY"
                     class="w-full px-2 py-2 border rounded-lg text-center">
                 </div>
                 <div>
@@ -120,18 +126,18 @@
               </div>
             </div>
 
-            <!-- Matematik -->
+            <!-- Matematik (40 soru) -->
             <div class="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Matematik</h3>
+              <h3 class="font-semibold mb-3">Matematik <span class="sub-subject">(40 soru)</span></h3>
               <div class="grid grid-cols-3 gap-3">
                 <div>
                   <label class="block text-xs mb-1">Doğru</label>
-                  <input type="number" min="0" value="0" id="matematikD"
+                  <input type="number" min="0" max="40" value="0" id="matematikD"
                     class="w-full px-2 py-2 border rounded-lg text-center">
                 </div>
                 <div>
                   <label class="block text-xs mb-1">Yanlış</label>
-                  <input type="number" min="0" value="0" id="matematikY"
+                  <input type="number" min="0" max="40" value="0" id="matematikY"
                     class="w-full px-2 py-2 border rounded-lg text-center">
                 </div>
                 <div>
@@ -142,18 +148,19 @@
               </div>
             </div>
 
-            <!-- Fen -->
+            <!-- Fen Bilimleri (20 soru) -->
             <div class="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Fen Bilimleri</h3>
+              <h3 class="font-semibold mb-3">Fen Bilimleri <span class="sub-subject">(20 soru)</span></h3>
+              <div class="text-xs text-slate-600 mb-2">Fizik 7, Kimya 7, Biyoloji 6</div>
               <div class="grid grid-cols-3 gap-3">
                 <div>
                   <label class="block text-xs mb-1">Doğru</label>
-                  <input type="number" min="0" value="0" id="fenD"
+                  <input type="number" min="0" max="20" value="0" id="fenD"
                     class="w-full px-2 py-2 border rounded-lg text-center">
                 </div>
                 <div>
                   <label class="block text-xs mb-1">Yanlış</label>
-                  <input type="number" min="0" value="0" id="fenY"
+                  <input type="number" min="0" max="20" value="0" id="fenY"
                     class="w-full px-2 py-2 border rounded-lg text-center">
                 </div>
                 <div>
@@ -165,8 +172,12 @@
             </div>
           </div>
 
+          <div class="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg">
+            <strong>Toplam:</strong> 120 soru (Türkçe 40 + Sosyal 20 + Matematik 40 + Fen 20)
+          </div>
+
           <button type="submit" id="submitBtn"
-            class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition w-full md:w-auto">
+            class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
             Sınavı Kaydet
           </button>
         </form>
@@ -201,8 +212,17 @@
     };
 
     // Firebase'i başlat
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    let app, db;
+    let useFirebase = true;
+
+    try {
+      app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      console.log("Firebase başlatıldı");
+    } catch (error) {
+      console.error("Firebase başlatma hatası:", error);
+      useFirebase = false;
+    }
 
     let exams = [];
     const syncStatus = document.getElementById('syncStatus');
@@ -265,7 +285,7 @@
                             <h3 class="font-semibold text-lg">${exam.name}</h3>
                             <p class="text-sm text-slate-600">${new Date(exam.date).toLocaleDateString('tr-TR')}</p>
                         </div>
-                        <button onclick="window.deleteExam('${exam.firebaseId}')" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                        <button onclick="window.deleteExam('${exam.firebaseId || exam.id}')" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
                             Sil
                         </button>
                     </div>
@@ -282,6 +302,17 @@
 
     // Firebase'den veri yükle
     async function loadExams() {
+      if (!useFirebase) {
+        syncStatus.innerHTML = '⚠️ Çevrimdışı mod - localStorage kullanılıyor';
+        const savedExams = localStorage.getItem('yks-exams');
+        if (savedExams) {
+          exams = JSON.parse(savedExams);
+          renderExams();
+          updateStats();
+        }
+        return;
+      }
+
       try {
         syncStatus.innerHTML = '<div class="loading"></div> Veriler yükleniyor...';
         const q = query(collection(db, 'exams'), orderBy('date', 'asc'));
@@ -292,17 +323,14 @@
           exams.push({ ...docSnap.data(), firebaseId: docSnap.id });
         });
 
-        // localStorage'a da kaydet (yedek)
         localStorage.setItem('yks-exams', JSON.stringify(exams));
-
         syncStatus.innerHTML = '☁️ Firebase ile senkronize';
         renderExams();
         updateStats();
       } catch (error) {
         console.error("Firebase hatası:", error);
-        syncStatus.innerHTML = '⚠️ Çevrimdışı mod - localStorage kullanılıyor';
+        syncStatus.innerHTML = '⚠️ Firebase bağlantı hatası - localStorage kullanılıyor';
 
-        // Hata durumunda localStorage'dan yükle
         const savedExams = localStorage.getItem('yks-exams');
         if (savedExams) {
           exams = JSON.parse(savedExams);
@@ -313,18 +341,25 @@
     }
 
     // Sınav sil
-    window.deleteExam = async function (firebaseId) {
+    window.deleteExam = async function (id) {
       if (!confirm('Bu sınavı silmek istediğinizden emin misiniz?')) {
         return;
       }
 
       try {
-        syncStatus.innerHTML = '<div class="loading"></div> Siliniyor...';
-        await deleteDoc(doc(db, 'exams', firebaseId));
-        await loadExams();
+        if (useFirebase) {
+          syncStatus.innerHTML = '<div class="loading"></div> Siliniyor...';
+          await deleteDoc(doc(db, 'exams', id));
+          await loadExams();
+        } else {
+          exams = exams.filter(e => e.id != id);
+          localStorage.setItem('yks-exams', JSON.stringify(exams));
+          renderExams();
+          updateStats();
+        }
       } catch (error) {
         console.error("Silme hatası:", error);
-        alert('Sınav silinirken bir hata oluştu.');
+        alert('Sınav silinirken bir hata oluştu: ' + error.message);
         syncStatus.innerHTML = '⚠️ Hata oluştu';
       }
     };
@@ -335,7 +370,7 @@
 
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Kaydediliyor...';
+      submitBtn.innerHTML = '<div class="loading"></div> Kaydediliyor...';
 
       const newExam = {
         id: Date.now(),
@@ -352,19 +387,26 @@
       newExam.totalNet = (newExam.nets.turkce + newExam.nets.sosyal + newExam.nets.matematik + newExam.nets.fen).toFixed(2);
 
       try {
-        syncStatus.innerHTML = '<div class="loading"></div> Firebase\'e kaydediliyor...';
-        await addDoc(collection(db, 'exams'), newExam);
+        if (useFirebase) {
+          syncStatus.innerHTML = '<div class="loading"></div> Firebase\'e kaydediliyor...';
+          const docRef = await addDoc(collection(db, 'exams'), newExam);
+          console.log("Firebase'e kaydedildi, ID:", docRef.id);
+          await loadExams();
+        } else {
+          exams.push(newExam);
+          exams.sort((a, b) => new Date(a.date) - new Date(b.date));
+          localStorage.setItem('yks-exams', JSON.stringify(exams));
+          renderExams();
+          updateStats();
+        }
 
-        // Formu sıfırla
         this.reset();
         document.getElementById('examDate').valueAsDate = new Date();
         updateNets();
-
-        await loadExams();
         alert('Sınav başarıyla kaydedildi!');
       } catch (error) {
         console.error("Kaydetme hatası:", error);
-        alert('Sınav kaydedilirken bir hata oluştu. Lütfen internet bağlantınızı kontrol edin.');
+        alert('Hata: ' + error.message + '\n\nFirestore kurallarınızı kontrol edin!');
         syncStatus.innerHTML = '⚠️ Kaydetme hatası';
       } finally {
         submitBtn.disabled = false;
