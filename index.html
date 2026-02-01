@@ -3,23 +3,23 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YKS (TYT) Net Takip Sistemi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>YKS Net Takip</title>
 
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(to bottom right, #f8fafc, #eff6ff);
       min-height: 100vh;
+      overscroll-behavior: none;
     }
 
     .loading {
@@ -38,10 +38,6 @@
       }
     }
 
-    .sub-subject-input {
-      font-size: 0.75rem;
-    }
-
     .modal {
       display: none;
       position: fixed;
@@ -53,6 +49,7 @@
       z-index: 1000;
       align-items: center;
       justify-content: center;
+      overflow-y: auto;
     }
 
     .modal.active {
@@ -62,245 +59,335 @@
     .modal-content {
       background: white;
       border-radius: 1rem;
-      max-width: 90%;
-      max-height: 90vh;
+      max-width: 95%;
+      max-height: 95vh;
       overflow-y: auto;
-      padding: 2rem;
+      padding: 1.5rem;
+      margin: 1rem;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(to right, #3b82f6, #2563eb);
+      color: white;
+    }
+
+    .tab-btn:not(.active) {
+      background: white;
+      color: #64748b;
+      border-color: #e2e8f0;
+    }
+
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+      /* Prevents zoom on iOS */
+    }
+
+    .touch-btn {
+      min-height: 44px;
+      min-width: 44px;
     }
   </style>
 </head>
 
 <body>
-  <div id="app" class="min-h-screen py-8 px-4">
-    <div class="max-w-7xl mx-auto">
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-blue-700 mb-2">YKS (TYT) Net Takip Sistemi</h1>
-        <p class="text-slate-600">Sınav performansınızı takip edin</p>
-        <div id="syncStatus" class="mt-2 text-sm text-slate-500">Yükleniyor...</div>
+  <div id="app" class="min-h-screen pb-20">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 sticky top-0 z-50 shadow-lg">
+      <h1 class="text-2xl font-bold text-center">📚 YKS Net Takip</h1>
+      <div id="syncStatus" class="text-center text-xs mt-1 opacity-90">Yükleniyor...</div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <!-- Tab Navigation -->
+      <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <button class="tab-btn active touch-btn" onclick="switchTab('exams')">🎯 Denemeler</button>
+        <button class="tab-btn touch-btn" onclick="switchTab('tests')">📝 Testler</button>
+        <button class="tab-btn touch-btn" onclick="switchTab('stats')">📊 İstatistikler</button>
       </div>
 
-      <!-- İstatistikler ve Grafik Butonu -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-xl shadow-lg">
-          <p class="text-sm text-green-600 mb-1">En Yüksek Net</p>
-          <p class="text-3xl font-bold text-green-700" id="highestNet">0.00</p>
+      <!-- Exams Tab -->
+      <div id="examsTab" class="tab-content">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="bg-white p-4 rounded-xl shadow-lg">
+            <p class="text-xs text-green-600 mb-1">En Yüksek</p>
+            <p class="text-2xl font-bold text-green-700" id="highestNet">0.00</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl shadow-lg">
+            <p class="text-xs text-blue-600 mb-1">Ortalama</p>
+            <p class="text-2xl font-bold text-blue-700" id="averageNet">0.00</p>
+          </div>
         </div>
-        <div class="bg-white p-6 rounded-xl shadow-lg">
-          <p class="text-sm text-blue-600 mb-1">Ortalama Net</p>
-          <p class="text-3xl font-bold text-blue-700" id="averageNet">0.00</p>
+
+        <!-- Add Exam Button -->
+        <button onclick="openExamModal()"
+          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-xl font-semibold shadow-lg mb-6 touch-btn">
+          ➕ Yeni Deneme Ekle
+        </button>
+
+        <!-- Search & Filter -->
+        <div class="bg-white p-4 rounded-xl shadow-lg mb-6">
+          <input type="text" id="examSearch" placeholder="🔍 Deneme ara..."
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
         </div>
-        <div
-          class="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg cursor-pointer hover:shadow-xl transition"
-          onclick="openChartModal()">
-          <p class="text-sm text-white mb-1">📊 Grafikler</p>
-          <p class="text-2xl font-bold text-white">Gelişim Analizi</p>
+
+        <!-- Exams List -->
+        <div id="examsList"></div>
+        <div id="examsEmpty" class="text-center py-12 text-slate-500 hidden">
+          <p class="text-xl mb-2">📝 Henüz deneme yok</p>
+          <p class="text-sm">Yukarıdaki butona tıklayarak ilk denemenizi ekleyin!</p>
         </div>
       </div>
 
-      <!-- Form -->
-      <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
-        <h2 class="text-2xl font-bold mb-6">Yeni Sınav Ekle</h2>
-        <form id="examForm" class="space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-semibold mb-2">Sınav Tarihi</label>
-              <input type="date" id="examDate" required
-                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-            </div>
-            <div>
-              <label class="block text-sm font-semibold mb-2">Sınav Adı</label>
-              <input type="text" id="examName" placeholder="Örn: TYT Deneme 1 - Acil Yayınları" required
-                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-            </div>
-          </div>
+      <!-- Tests Tab -->
+      <div id="testsTab" class="tab-content hidden">
+        <button onclick="openTestModal()"
+          class="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 rounded-xl font-semibold shadow-lg mb-6 touch-btn">
+          ➕ Yeni Test Ekle
+        </button>
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Türkçe (40 soru) -->
-            <div class="p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Türkçe <span class="text-xs text-slate-600">(40 soru)</span></h3>
-              <div class="grid grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-xs mb-1">Doğru</label>
-                  <input type="number" min="0" max="40" value="0" id="turkceD"
-                    class="w-full px-2 py-2 border rounded-lg text-center">
-                </div>
-                <div>
-                  <label class="block text-xs mb-1">Yanlış</label>
-                  <input type="number" min="0" max="40" value="0" id="turkceY"
-                    class="w-full px-2 py-2 border rounded-lg text-center">
-                </div>
-                <div>
-                  <label class="block text-xs mb-1">Net</label>
-                  <div id="turkceNet" class="px-2 py-2 bg-slate-100 rounded-lg text-center font-bold text-blue-700">0.00
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div class="bg-white p-4 rounded-xl shadow-lg mb-6">
+          <input type="text" id="testSearch" placeholder="🔍 Test ara..."
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+        </div>
 
-            <!-- Sosyal Bilimler (20 soru) -->
-            <div class="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Sosyal Bilimler <span class="text-xs text-slate-600">(20 soru)</span></h3>
-              <div class="space-y-2 mb-3">
-                <!-- Tarih -->
-                <div class="grid grid-cols-3 gap-2 text-xs">
-                  <label class="text-slate-600">Tarih (5)</label>
-                  <input type="number" min="0" max="5" value="0" id="tarihD" placeholder="D"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                  <input type="number" min="0" max="5" value="0" id="tarihY" placeholder="Y"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                </div>
-                <!-- Coğrafya -->
-                <div class="grid grid-cols-3 gap-2 text-xs">
-                  <label class="text-slate-600">Coğrafya (5)</label>
-                  <input type="number" min="0" max="5" value="0" id="cografyaD" placeholder="D"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                  <input type="number" min="0" max="5" value="0" id="cografyaY" placeholder="Y"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                </div>
-                <!-- Felsefe -->
-                <div class="grid grid-cols-3 gap-2 text-xs">
-                  <label class="text-slate-600">Felsefe (5)</label>
-                  <input type="number" min="0" max="5" value="0" id="felsefeD" placeholder="D"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                  <input type="number" min="0" max="5" value="0" id="felsefeY" placeholder="Y"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                </div>
-                <!-- Din -->
-                <div class="grid grid-cols-3 gap-2 text-xs">
-                  <label class="text-slate-600">Din (5)</label>
-                  <input type="number" min="0" max="5" value="0" id="dinD" placeholder="D"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                  <input type="number" min="0" max="5" value="0" id="dinY" placeholder="Y"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                </div>
-              </div>
-              <div class="grid grid-cols-3 gap-3 pt-2 border-t">
-                <div class="text-xs font-semibold">Toplam</div>
-                <div id="sosyalD" class="text-center font-bold text-yellow-700">0</div>
-                <div id="sosyalY" class="text-center font-bold text-yellow-700">0</div>
-              </div>
-              <div class="mt-2 text-center">
-                <div class="text-xs mb-1">Net</div>
-                <div id="sosyalNet" class="px-2 py-2 bg-slate-100 rounded-lg text-center font-bold text-blue-700">0.00
-                </div>
-              </div>
-            </div>
-
-            <!-- Matematik (40 soru) -->
-            <div class="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Matematik <span class="text-xs text-slate-600">(40 soru)</span></h3>
-              <div class="grid grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-xs mb-1">Doğru</label>
-                  <input type="number" min="0" max="40" value="0" id="matematikD"
-                    class="w-full px-2 py-2 border rounded-lg text-center">
-                </div>
-                <div>
-                  <label class="block text-xs mb-1">Yanlış</label>
-                  <input type="number" min="0" max="40" value="0" id="matematikY"
-                    class="w-full px-2 py-2 border rounded-lg text-center">
-                </div>
-                <div>
-                  <label class="block text-xs mb-1">Net</label>
-                  <div id="matematikNet" class="px-2 py-2 bg-slate-100 rounded-lg text-center font-bold text-blue-700">
-                    0.00</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Fen Bilimleri (20 soru) -->
-            <div class="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
-              <h3 class="font-semibold mb-3">Fen Bilimleri <span class="text-xs text-slate-600">(20 soru)</span></h3>
-              <div class="space-y-2 mb-3">
-                <!-- Fizik -->
-                <div class="grid grid-cols-3 gap-2 text-xs">
-                  <label class="text-slate-600">Fizik (7)</label>
-                  <input type="number" min="0" max="7" value="0" id="fizikD" placeholder="D"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                  <input type="number" min="0" max="7" value="0" id="fizikY" placeholder="Y"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                </div>
-                <!-- Kimya -->
-                <div class="grid grid-cols-3 gap-2 text-xs">
-                  <label class="text-slate-600">Kimya (7)</label>
-                  <input type="number" min="0" max="7" value="0" id="kimyaD" placeholder="D"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                  <input type="number" min="0" max="7" value="0" id="kimyaY" placeholder="Y"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                </div>
-                <!-- Biyoloji -->
-                <div class="grid grid-cols-3 gap-2 text-xs">
-                  <label class="text-slate-600">Biyoloji (6)</label>
-                  <input type="number" min="0" max="6" value="0" id="biyolojiD" placeholder="D"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                  <input type="number" min="0" max="6" value="0" id="biyolojiY" placeholder="Y"
-                    class="px-2 py-1 border rounded text-center sub-subject-input">
-                </div>
-              </div>
-              <div class="grid grid-cols-3 gap-3 pt-2 border-t">
-                <div class="text-xs font-semibold">Toplam</div>
-                <div id="fenD" class="text-center font-bold text-green-700">0</div>
-                <div id="fenY" class="text-center font-bold text-green-700">0</div>
-              </div>
-              <div class="mt-2 text-center">
-                <div class="text-xs mb-1">Net</div>
-                <div id="fenNet" class="px-2 py-2 bg-slate-100 rounded-lg text-center font-bold text-blue-700">0.00
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg">
-            <strong>Toplam:</strong> 120 soru (Türkçe 40 + Sosyal 20 + Matematik 40 + Fen 20)
-          </div>
-
-          <button type="submit" id="submitBtn"
-            class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
-            Sınavı Kaydet
-          </button>
-        </form>
+        <div id="testsList"></div>
+        <div id="testsEmpty" class="text-center py-12 text-slate-500 hidden">
+          <p class="text-xl mb-2">📚 Henüz test yok</p>
+          <p class="text-sm">Çözdüğünüz testleri buradan takip edebilirsiniz!</p>
+        </div>
       </div>
 
-      <!-- Sınav Listesi -->
-      <div class="bg-white p-6 rounded-xl shadow-lg">
-        <h2 class="text-2xl font-bold mb-6">Sınav Geçmişi</h2>
-        <div id="examList" class="space-y-4"></div>
-        <div id="emptyState" class="text-center py-12 text-slate-500">
-          <p class="text-xl mb-2">Henüz sınav kaydı yok</p>
-          <p>Yukarıdaki formu kullanarak ilk sınavınızı ekleyin!</p>
+      <!-- Stats Tab -->
+      <div id="statsTab" class="tab-content hidden">
+        <div class="space-y-6">
+          <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h3 class="text-lg font-bold mb-4">📈 Net Gelişim Grafiği</h3>
+            <canvas id="netChart"></canvas>
+          </div>
+
+          <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h3 class="text-lg font-bold mb-4">📊 Doğru/Yanlış Dağılımı</h3>
+            <canvas id="correctWrongChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Grafik Modal -->
-  <div id="chartModal" class="modal">
-    <div class="modal-content" style="max-width: 1200px;">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold">📊 Gelişim Grafikleri</h2>
-        <button onclick="closeChartModal()" class="text-slate-500 hover:text-slate-700 text-2xl">&times;</button>
+  <!-- Exam Modal -->
+  <div id="examModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold" id="examModalTitle">Yeni Deneme</h2>
+        <button onclick="closeExamModal()" class="text-2xl text-slate-500">&times;</button>
       </div>
 
-      <div class="space-y-8">
-        <!-- Net Gelişim Grafiği -->
+      <form id="examForm" class="space-y-4">
+        <input type="hidden" id="examId">
+
         <div>
-          <h3 class="text-lg font-semibold mb-4">Net Gelişim Grafiği</h3>
-          <canvas id="netChart"></canvas>
+          <label class="block text-sm font-semibold mb-2">Tarih</label>
+          <input type="date" id="examDate" required
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
         </div>
 
-        <!-- Doğru/Yanlış Grafiği -->
         <div>
-          <h3 class="text-lg font-semibold mb-4">Doğru/Yanlış Dağılımı</h3>
-          <canvas id="correctWrongChart"></canvas>
+          <label class="block text-sm font-semibold mb-2">Deneme Adı</label>
+          <input type="text" id="examName" placeholder="Örn: TYT Deneme 1 - Acil" required
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
         </div>
-      </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">Notlar (İsteğe bağlı)</label>
+          <textarea id="examNotes" rows="2" placeholder="Deneme hakkında notlarınız..."
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+        </div>
+
+        <!-- Subjects -->
+        <div class="space-y-4">
+          <!-- Türkçe -->
+          <div class="p-3 bg-red-50 border-2 border-red-200 rounded-lg">
+            <h3 class="font-semibold mb-2 text-sm">Türkçe (40)</h3>
+            <div class="grid grid-cols-3 gap-2">
+              <input type="number" min="0" max="40" value="0" id="turkceD" placeholder="D"
+                class="px-3 py-2 border rounded text-center">
+              <input type="number" min="0" max="40" value="0" id="turkceY" placeholder="Y"
+                class="px-3 py-2 border rounded text-center">
+              <div id="turkceNet" class="px-3 py-2 bg-slate-100 rounded text-center font-bold text-blue-700">0.00</div>
+            </div>
+          </div>
+
+          <!-- Sosyal -->
+          <div class="p-3 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
+            <h3 class="font-semibold mb-2 text-sm">Sosyal (20)</h3>
+            <div class="space-y-1 mb-2 text-xs">
+              <div class="grid grid-cols-3 gap-1">
+                <span>Tarih</span>
+                <input type="number" min="0" max="5" value="0" id="tarihD" class="px-2 py-1 border rounded text-center">
+                <input type="number" min="0" max="5" value="0" id="tarihY" class="px-2 py-1 border rounded text-center">
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <span>Coğrafya</span>
+                <input type="number" min="0" max="5" value="0" id="cografyaD"
+                  class="px-2 py-1 border rounded text-center">
+                <input type="number" min="0" max="5" value="0" id="cografyaY"
+                  class="px-2 py-1 border rounded text-center">
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <span>Felsefe</span>
+                <input type="number" min="0" max="5" value="0" id="felsefeD"
+                  class="px-2 py-1 border rounded text-center">
+                <input type="number" min="0" max="5" value="0" id="felsefeY"
+                  class="px-2 py-1 border rounded text-center">
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <span>Din</span>
+                <input type="number" min="0" max="5" value="0" id="dinD" class="px-2 py-1 border rounded text-center">
+                <input type="number" min="0" max="5" value="0" id="dinY" class="px-2 py-1 border rounded text-center">
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2 border-t">
+              <span class="text-xs font-semibold">Toplam</span>
+              <div id="sosyalD" class="text-center font-bold text-yellow-700">0</div>
+              <div id="sosyalY" class="text-center font-bold text-yellow-700">0</div>
+            </div>
+            <div id="sosyalNet" class="mt-2 px-3 py-2 bg-slate-100 rounded text-center font-bold text-blue-700">0.00
+            </div>
+          </div>
+
+          <!-- Matematik -->
+          <div class="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg">
+            <h3 class="font-semibold mb-2 text-sm">Matematik (40)</h3>
+            <div class="grid grid-cols-3 gap-2">
+              <input type="number" min="0" max="40" value="0" id="matematikD" placeholder="D"
+                class="px-3 py-2 border rounded text-center">
+              <input type="number" min="0" max="40" value="0" id="matematikY" placeholder="Y"
+                class="px-3 py-2 border rounded text-center">
+              <div id="matematikNet" class="px-3 py-2 bg-slate-100 rounded text-center font-bold text-blue-700">0.00
+              </div>
+            </div>
+          </div>
+
+          <!-- Fen -->
+          <div class="p-3 bg-green-50 border-2 border-green-200 rounded-lg">
+            <h3 class="font-semibold mb-2 text-sm">Fen (20)</h3>
+            <div class="space-y-1 mb-2 text-xs">
+              <div class="grid grid-cols-3 gap-1">
+                <span>Fizik</span>
+                <input type="number" min="0" max="7" value="0" id="fizikD" class="px-2 py-1 border rounded text-center">
+                <input type="number" min="0" max="7" value="0" id="fizikY" class="px-2 py-1 border rounded text-center">
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <span>Kimya</span>
+                <input type="number" min="0" max="7" value="0" id="kimyaD" class="px-2 py-1 border rounded text-center">
+                <input type="number" min="0" max="7" value="0" id="kimyaY" class="px-2 py-1 border rounded text-center">
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <span>Biyoloji</span>
+                <input type="number" min="0" max="6" value="0" id="biyolojiD"
+                  class="px-2 py-1 border rounded text-center">
+                <input type="number" min="0" max="6" value="0" id="biyolojiY"
+                  class="px-2 py-1 border rounded text-center">
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2 border-t">
+              <span class="text-xs font-semibold">Toplam</span>
+              <div id="fenD" class="text-center font-bold text-green-700">0</div>
+              <div id="fenY" class="text-center font-bold text-green-700">0</div>
+            </div>
+            <div id="fenNet" class="mt-2 px-3 py-2 bg-slate-100 rounded text-center font-bold text-blue-700">0.00</div>
+          </div>
+        </div>
+
+        <button type="submit" id="examSubmitBtn"
+          class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition touch-btn">
+          Kaydet
+        </button>
+      </form>
     </div>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Test Modal -->
+  <div id="testModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold" id="testModalTitle">Yeni Test</h2>
+        <button onclick="closeTestModal()" class="text-2xl text-slate-500">&times;</button>
+      </div>
+
+      <form id="testForm" class="space-y-4">
+        <input type="hidden" id="testId">
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">Tarih</label>
+          <input type="date" id="testDate" required
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">Ders</label>
+          <select id="testSubject" required
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+            <option value="turkce">Türkçe</option>
+            <option value="tarih">Tarih</option>
+            <option value="cografya">Coğrafya</option>
+            <option value="felsefe">Felsefe</option>
+            <option value="din">Din</option>
+            <option value="matematik">Matematik</option>
+            <option value="fizik">Fizik</option>
+            <option value="kimya">Kimya</option>
+            <option value="biyoloji">Biyoloji</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">Konu/Test Adı</label>
+          <input type="text" id="testName" placeholder="Örn: Paragraf Testi" required
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold mb-2">Doğru</label>
+            <input type="number" min="0" value="0" id="testCorrect"
+              class="w-full px-4 py-3 border rounded-lg text-center focus:ring-2 focus:ring-purple-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-2">Yanlış</label>
+            <input type="number" min="0" value="0" id="testWrong"
+              class="w-full px-4 py-3 border rounded-lg text-center focus:ring-2 focus:ring-purple-500 outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">Notlar</label>
+          <textarea id="testNotes" rows="2" placeholder="Test hakkında notlar..."
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"></textarea>
+        </div>
+
+        <button type="submit" id="testSubmitBtn"
+          class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition touch-btn">
+          Kaydet
+        </button>
+      </form>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCrHZgNwjCqXMXj5Hes2bAP0O2ihQIKoCE",
@@ -312,28 +399,29 @@
       measurementId: "G-TQV1KD6JNN"
     };
 
-    let app, db;
-    let useFirebase = true;
-
+    let app, db, useFirebase = true;
     try {
       app = initializeApp(firebaseConfig);
       db = getFirestore(app);
     } catch (error) {
-      console.error("Firebase başlatma hatası:", error);
+      console.error("Firebase error:", error);
       useFirebase = false;
     }
 
     let exams = [];
+    let tests = [];
+    let currentEditingExam = null;
+    let currentEditingTest = null;
+
     const syncStatus = document.getElementById('syncStatus');
 
-    // Net hesaplama
+    // Net calculation
     function calculateNet(dogru, yanlis) {
       return Math.max(0, dogru - (yanlis / 4)).toFixed(2);
     }
 
-    // Alt derslerin toplamını hesapla
+    // Update subject totals
     function updateSubjectTotals() {
-      // Sosyal Bilimler
       const sosyalD = ['tarih', 'cografya', 'felsefe', 'din'].reduce((sum, sub) =>
         sum + (parseInt(document.getElementById(sub + 'D').value) || 0), 0);
       const sosyalY = ['tarih', 'cografya', 'felsefe', 'din'].reduce((sum, sub) =>
@@ -343,7 +431,6 @@
       document.getElementById('sosyalY').textContent = sosyalY;
       document.getElementById('sosyalNet').textContent = calculateNet(sosyalD, sosyalY);
 
-      // Fen Bilimleri
       const fenD = ['fizik', 'kimya', 'biyoloji'].reduce((sum, sub) =>
         sum + (parseInt(document.getElementById(sub + 'D').value) || 0), 0);
       const fenY = ['fizik', 'kimya', 'biyoloji'].reduce((sum, sub) =>
@@ -354,26 +441,33 @@
       document.getElementById('fenNet').textContent = calculateNet(fenD, fenY);
     }
 
-    // Net değerlerini güncelle
     function updateNets() {
-      // Türkçe ve Matematik
       ['turkce', 'matematik'].forEach(subject => {
         const dogru = parseInt(document.getElementById(subject + 'D').value) || 0;
         const yanlis = parseInt(document.getElementById(subject + 'Y').value) || 0;
         document.getElementById(subject + 'Net').textContent = calculateNet(dogru, yanlis);
       });
-
-      // Alt dersler
       updateSubjectTotals();
     }
 
-    // Tüm input değişikliklerini dinle
     document.querySelectorAll('input[type="number"]').forEach(input => {
       input.addEventListener('input', updateNets);
     });
 
-    document.getElementById('examDate').valueAsDate = new Date();
+    // Tab switching
+    window.switchTab = function (tab) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
 
+      event.target.classList.add('active');
+      document.getElementById(tab + 'Tab').classList.remove('hidden');
+
+      if (tab === 'stats') {
+        setTimeout(() => createCharts(), 100);
+      }
+    };
+
+    // Update stats
     function updateStats() {
       if (exams.length === 0) {
         document.getElementById('highestNet').textContent = '0.00';
@@ -389,116 +483,279 @@
       document.getElementById('averageNet').textContent = average;
     }
 
-    function renderExams() {
-      const listEl = document.getElementById('examList');
-      const emptyEl = document.getElementById('emptyState');
+    // Render exams
+    function renderExams(filter = '') {
+      const listEl = document.getElementById('examsList');
+      const emptyEl = document.getElementById('examsEmpty');
 
-      if (exams.length === 0) {
+      const filtered = exams.filter(e =>
+        e.name.toLowerCase().includes(filter.toLowerCase()) ||
+        new Date(e.date).toLocaleDateString('tr-TR').includes(filter)
+      );
+
+      if (filtered.length === 0) {
         listEl.innerHTML = '';
-        emptyEl.style.display = 'block';
+        emptyEl.classList.remove('hidden');
         return;
       }
 
-      emptyEl.style.display = 'none';
-      listEl.innerHTML = exams.map((exam) => `
-                <div class="border rounded-lg p-4 hover:bg-slate-50 transition">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h3 class="font-semibold text-lg">${exam.name}</h3>
-                            <p class="text-sm text-slate-600">${new Date(exam.date).toLocaleDateString('tr-TR')}</p>
-                        </div>
-                        <button onclick="window.deleteExam('${exam.firebaseId || exam.id}')" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                            Sil
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
-                        <div><span class="font-semibold text-red-600">Türkçe:</span> ${exam.nets.turkce}</div>
-                        <div><span class="font-semibold text-yellow-600">Sosyal:</span> ${exam.nets.sosyal}</div>
-                        <div><span class="font-semibold text-blue-600">Matematik:</span> ${exam.nets.matematik}</div>
-                        <div><span class="font-semibold text-green-600">Fen:</span> ${exam.nets.fen}</div>
-                        <div><span class="font-semibold text-purple-600">Toplam:</span> ${exam.totalNet}</div>
-                    </div>
-                </div>
-            `).join('');
+      emptyEl.classList.add('hidden');
+      listEl.innerHTML = filtered.map(exam => `
+        <div class="bg-white p-4 rounded-xl shadow-lg mb-4">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <h3 class="font-bold text-lg">${exam.name}</h3>
+              <p class="text-sm text-slate-600">${new Date(exam.date).toLocaleDateString('tr-TR')}</p>
+              ${exam.notes ? `<p class="text-xs text-slate-500 mt-1">${exam.notes}</p>` : ''}
+            </div>
+            <div class="flex gap-2">
+              <button onclick="editExam('${exam.firebaseId || exam.id}')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm touch-btn">✏️</button>
+              <button onclick="deleteExam('${exam.firebaseId || exam.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm touch-btn">🗑️</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div><span class="font-semibold text-red-600">Türkçe:</span> ${exam.nets.turkce}</div>
+            <div><span class="font-semibold text-yellow-600">Sosyal:</span> ${exam.nets.sosyal}</div>
+            <div><span class="font-semibold text-blue-600">Matematik:</span> ${exam.nets.matematik}</div>
+            <div><span class="font-semibold text-green-600">Fen:</span> ${exam.nets.fen}</div>
+          </div>
+          <div class="mt-2 pt-2 border-t">
+            <span class="font-bold text-purple-600">Toplam Net: ${exam.totalNet}</span>
+          </div>
+        </div>
+      `).join('');
     }
 
+    // Render tests
+    function renderTests(filter = '') {
+      const listEl = document.getElementById('testsList');
+      const emptyEl = document.getElementById('testsEmpty');
+
+      const filtered = tests.filter(t =>
+        t.name.toLowerCase().includes(filter.toLowerCase()) ||
+        t.subject.toLowerCase().includes(filter.toLowerCase())
+      );
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+
+      emptyEl.classList.add('hidden');
+
+      const subjectColors = {
+        turkce: 'red', tarih: 'yellow', cografya: 'yellow', felsefe: 'yellow', din: 'yellow',
+        matematik: 'blue', fizik: 'green', kimya: 'green', biyoloji: 'green'
+      };
+
+      listEl.innerHTML = filtered.map(test => {
+        const color = subjectColors[test.subject] || 'gray';
+        const net = calculateNet(test.correct, test.wrong);
+        return `
+          <div class="bg-white p-4 rounded-xl shadow-lg mb-4">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <span class="text-xs font-semibold text-${color}-600 bg-${color}-100 px-2 py-1 rounded">${test.subject.toUpperCase()}</span>
+                <h3 class="font-bold mt-1">${test.name}</h3>
+                <p class="text-sm text-slate-600">${new Date(test.date).toLocaleDateString('tr-TR')}</p>
+                ${test.notes ? `<p class="text-xs text-slate-500 mt-1">${test.notes}</p>` : ''}
+              </div>
+              <div class="flex gap-2">
+                <button onclick="editTest('${test.firebaseId || test.id}')" class="bg-purple-500 text-white px-3 py-1 rounded text-sm touch-btn">✏️</button>
+                <button onclick="deleteTest('${test.firebaseId || test.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm touch-btn">🗑️</button>
+              </div>
+            </div>
+            <div class="flex gap-4 text-sm">
+              <span class="text-green-600">✓ ${test.correct}</span>
+              <span class="text-red-600">✗ ${test.wrong}</span>
+              <span class="font-bold text-blue-600">Net: ${net}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Search handlers
+    document.getElementById('examSearch').addEventListener('input', (e) => {
+      renderExams(e.target.value);
+    });
+
+    document.getElementById('testSearch').addEventListener('input', (e) => {
+      renderTests(e.target.value);
+    });
+
+    // Load data
     async function loadExams() {
       if (!useFirebase) {
-        syncStatus.innerHTML = '⚠️ Çevrimdışı mod';
-        const savedExams = localStorage.getItem('yks-exams');
-        if (savedExams) {
-          exams = JSON.parse(savedExams);
-          renderExams();
-          updateStats();
-        }
+        syncStatus.innerHTML = '⚠️ Çevrimdışı';
+        exams = JSON.parse(localStorage.getItem('yks-exams') || '[]');
+        tests = JSON.parse(localStorage.getItem('yks-tests') || '[]');
+        renderExams();
+        renderTests();
+        updateStats();
         return;
       }
 
       try {
         syncStatus.innerHTML = '<div class="loading"></div> Yükleniyor...';
-        const q = query(collection(db, 'exams'), orderBy('date', 'asc'));
-        const querySnapshot = await getDocs(q);
+
+        const [examsSnap, testsSnap] = await Promise.all([
+          getDocs(query(collection(db, 'exams'), orderBy('date', 'desc'))),
+          getDocs(query(collection(db, 'tests'), orderBy('date', 'desc')))
+        ]);
 
         exams = [];
-        querySnapshot.forEach((docSnap) => {
-          exams.push({ ...docSnap.data(), firebaseId: docSnap.id });
-        });
+        examsSnap.forEach(doc => exams.push({ ...doc.data(), firebaseId: doc.id }));
+
+        tests = [];
+        testsSnap.forEach(doc => tests.push({ ...doc.data(), firebaseId: doc.id }));
 
         localStorage.setItem('yks-exams', JSON.stringify(exams));
-        syncStatus.innerHTML = '☁️ Firebase ile senkronize';
+        localStorage.setItem('yks-tests', JSON.stringify(tests));
+
+        syncStatus.innerHTML = '☁️ Senkronize';
         renderExams();
+        renderTests();
         updateStats();
       } catch (error) {
-        console.error("Firebase hatası:", error);
-        syncStatus.innerHTML = '⚠️ Çevrimdışı mod';
-
-        const savedExams = localStorage.getItem('yks-exams');
-        if (savedExams) {
-          exams = JSON.parse(savedExams);
-          renderExams();
-          updateStats();
-        }
+        console.error("Load error:", error);
+        syncStatus.innerHTML = '⚠️ Hata';
+        exams = JSON.parse(localStorage.getItem('yks-exams') || '[]');
+        tests = JSON.parse(localStorage.getItem('yks-tests') || '[]');
+        renderExams();
+        renderTests();
+        updateStats();
       }
     }
 
-    window.deleteExam = async function (id) {
-      if (!confirm('Bu sınavı silmek istediğinizden emin misiniz?')) {
-        return;
+    // Exam modal functions
+    window.openExamModal = function () {
+      currentEditingExam = null;
+      document.getElementById('examModalTitle').textContent = 'Yeni Deneme';
+      document.getElementById('examForm').reset();
+      document.getElementById('examDate').valueAsDate = new Date();
+      document.getElementById('examId').value = '';
+      updateNets();
+      document.getElementById('examModal').classList.add('active');
+    };
+
+    window.closeExamModal = function () {
+      document.getElementById('examModal').classList.remove('active');
+    };
+
+    window.editExam = function (id) {
+      const exam = exams.find(e => (e.firebaseId || e.id) == id);
+      if (!exam) return;
+
+      currentEditingExam = exam;
+      document.getElementById('examModalTitle').textContent = 'Deneme Düzenle';
+      document.getElementById('examId').value = id;
+      document.getElementById('examDate').value = exam.date;
+      document.getElementById('examName').value = exam.name;
+      document.getElementById('examNotes').value = exam.notes || '';
+
+      if (exam.details) {
+        document.getElementById('turkceD').value = exam.details.turkce.dogru;
+        document.getElementById('turkceY').value = exam.details.turkce.yanlis;
+        document.getElementById('matematikD').value = exam.details.matematik.dogru;
+        document.getElementById('matematikY').value = exam.details.matematik.yanlis;
+
+        ['tarih', 'cografya', 'felsefe', 'din'].forEach(sub => {
+          document.getElementById(sub + 'D').value = exam.details.sosyal[sub].dogru;
+          document.getElementById(sub + 'Y').value = exam.details.sosyal[sub].yanlis;
+        });
+
+        ['fizik', 'kimya', 'biyoloji'].forEach(sub => {
+          document.getElementById(sub + 'D').value = exam.details.fen[sub].dogru;
+          document.getElementById(sub + 'Y').value = exam.details.fen[sub].yanlis;
+        });
+
+        updateNets();
       }
+
+      document.getElementById('examModal').classList.add('active');
+    };
+
+    window.deleteExam = async function (id) {
+      if (!confirm('Bu denemeyi silmek istediğinizden emin misiniz?')) return;
 
       try {
         if (useFirebase) {
           await deleteDoc(doc(db, 'exams', id));
-          await loadExams();
-        } else {
-          exams = exams.filter(e => e.id != id);
-          localStorage.setItem('yks-exams', JSON.stringify(exams));
-          renderExams();
-          updateStats();
         }
+        exams = exams.filter(e => (e.firebaseId || e.id) != id);
+        localStorage.setItem('yks-exams', JSON.stringify(exams));
+        renderExams();
+        updateStats();
       } catch (error) {
-        console.error("Silme hatası:", error);
-        alert('Hata: ' + error.message);
+        alert('Silme hatası: ' + error.message);
       }
     };
 
+    // Test modal functions
+    window.openTestModal = function () {
+      currentEditingTest = null;
+      document.getElementById('testModalTitle').textContent = 'Yeni Test';
+      document.getElementById('testForm').reset();
+      document.getElementById('testDate').valueAsDate = new Date();
+      document.getElementById('testId').value = '';
+      document.getElementById('testModal').classList.add('active');
+    };
+
+    window.closeTestModal = function () {
+      document.getElementById('testModal').classList.remove('active');
+    };
+
+    window.editTest = function (id) {
+      const test = tests.find(t => (t.firebaseId || t.id) == id);
+      if (!test) return;
+
+      currentEditingTest = test;
+      document.getElementById('testModalTitle').textContent = 'Test Düzenle';
+      document.getElementById('testId').value = id;
+      document.getElementById('testDate').value = test.date;
+      document.getElementById('testSubject').value = test.subject;
+      document.getElementById('testName').value = test.name;
+      document.getElementById('testCorrect').value = test.correct;
+      document.getElementById('testWrong').value = test.wrong;
+      document.getElementById('testNotes').value = test.notes || '';
+      document.getElementById('testModal').classList.add('active');
+    };
+
+    window.deleteTest = async function (id) {
+      if (!confirm('Bu testi silmek istediğinizden emin misiniz?')) return;
+
+      try {
+        if (useFirebase) {
+          await deleteDoc(doc(db, 'tests', id));
+        }
+        tests = tests.filter(t => (t.firebaseId || t.id) != id);
+        localStorage.setItem('yks-tests', JSON.stringify(tests));
+        renderTests();
+      } catch (error) {
+        alert('Silme hatası: ' + error.message);
+      }
+    };
+
+    // Form submissions
     document.getElementById('examForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
-      const submitBtn = document.getElementById('submitBtn');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<div class="loading"></div> Kaydediliyor...';
+      const btn = document.getElementById('examSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="loading"></div> Kaydediliyor...';
 
-      // Alt dersleri topla
       const sosyalD = parseInt(document.getElementById('sosyalD').textContent);
       const sosyalY = parseInt(document.getElementById('sosyalY').textContent);
       const fenD = parseInt(document.getElementById('fenD').textContent);
       const fenY = parseInt(document.getElementById('fenY').textContent);
 
-      const newExam = {
-        id: Date.now(),
+      const examData = {
+        id: currentEditingExam ? currentEditingExam.id : Date.now(),
         date: document.getElementById('examDate').value,
         name: document.getElementById('examName').value,
+        notes: document.getElementById('examNotes').value,
         nets: {
           turkce: parseFloat(document.getElementById('turkceNet').textContent),
           sosyal: parseFloat(calculateNet(sosyalD, sosyalY)),
@@ -553,58 +810,88 @@
         }
       };
 
-      newExam.totalNet = (newExam.nets.turkce + newExam.nets.sosyal + newExam.nets.matematik + newExam.nets.fen).toFixed(2);
+      examData.totalNet = (examData.nets.turkce + examData.nets.sosyal + examData.nets.matematik + examData.nets.fen).toFixed(2);
 
       try {
-        if (useFirebase) {
-          await addDoc(collection(db, 'exams'), newExam);
-          await loadExams();
+        if (currentEditingExam) {
+          if (useFirebase && currentEditingExam.firebaseId) {
+            await updateDoc(doc(db, 'exams', currentEditingExam.firebaseId), examData);
+          }
+          const index = exams.findIndex(e => (e.firebaseId || e.id) == (currentEditingExam.firebaseId || currentEditingExam.id));
+          exams[index] = { ...examData, firebaseId: currentEditingExam.firebaseId };
         } else {
-          exams.push(newExam);
-          exams.sort((a, b) => new Date(a.date) - new Date(b.date));
-          localStorage.setItem('yks-exams', JSON.stringify(exams));
-          renderExams();
-          updateStats();
+          if (useFirebase) {
+            const docRef = await addDoc(collection(db, 'exams'), examData);
+            examData.firebaseId = docRef.id;
+          }
+          exams.push(examData);
         }
 
-        this.reset();
-        document.getElementById('examDate').valueAsDate = new Date();
-        updateNets();
-        alert('Sınav başarıyla kaydedildi!');
+        exams.sort((a, b) => new Date(b.date) - new Date(a.date));
+        localStorage.setItem('yks-exams', JSON.stringify(exams));
+        renderExams();
+        updateStats();
+        closeExamModal();
       } catch (error) {
-        console.error("Kaydetme hatası:", error);
         alert('Hata: ' + error.message);
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Sınavı Kaydet';
+        btn.disabled = false;
+        btn.textContent = 'Kaydet';
       }
     });
 
-    // Grafik Modal Fonksiyonları
+    document.getElementById('testForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('testSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="loading"></div> Kaydediliyor...';
+
+      const testData = {
+        id: currentEditingTest ? currentEditingTest.id : Date.now(),
+        date: document.getElementById('testDate').value,
+        subject: document.getElementById('testSubject').value,
+        name: document.getElementById('testName').value,
+        correct: parseInt(document.getElementById('testCorrect').value) || 0,
+        wrong: parseInt(document.getElementById('testWrong').value) || 0,
+        notes: document.getElementById('testNotes').value
+      };
+
+      try {
+        if (currentEditingTest) {
+          if (useFirebase && currentEditingTest.firebaseId) {
+            await updateDoc(doc(db, 'tests', currentEditingTest.firebaseId), testData);
+          }
+          const index = tests.findIndex(t => (t.firebaseId || t.id) == (currentEditingTest.firebaseId || currentEditingTest.id));
+          tests[index] = { ...testData, firebaseId: currentEditingTest.firebaseId };
+        } else {
+          if (useFirebase) {
+            const docRef = await addDoc(collection(db, 'tests'), testData);
+            testData.firebaseId = docRef.id;
+          }
+          tests.push(testData);
+        }
+
+        tests.sort((a, b) => new Date(b.date) - new Date(a.date));
+        localStorage.setItem('yks-tests', JSON.stringify(tests));
+        renderTests();
+        closeTestModal();
+      } catch (error) {
+        alert('Hata: ' + error.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kaydet';
+      }
+    });
+
+    // Charts
     let netChart, correctWrongChart;
 
-    window.openChartModal = function () {
-      if (exams.length === 0) {
-        alert('Grafik göstermek için en az bir sınav eklemelisiniz!');
-        return;
-      }
-
-      document.getElementById('chartModal').classList.add('active');
-      setTimeout(() => {
-        createCharts();
-      }, 100);
-    };
-
-    window.closeChartModal = function () {
-      document.getElementById('chartModal').classList.remove('active');
-      if (netChart) netChart.destroy();
-      if (correctWrongChart) correctWrongChart.destroy();
-    };
-
     function createCharts() {
-      const dates = exams.map(e => new Date(e.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }));
+      if (exams.length === 0) return;
 
-      // Net Gelişim Grafiği
+      const dates = exams.slice().reverse().map(e => new Date(e.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }));
+
       const netCtx = document.getElementById('netChart').getContext('2d');
       if (netChart) netChart.destroy();
 
@@ -615,35 +902,35 @@
           datasets: [
             {
               label: 'Türkçe',
-              data: exams.map(e => e.nets.turkce),
+              data: exams.slice().reverse().map(e => e.nets.turkce),
               borderColor: 'rgb(239, 68, 68)',
               backgroundColor: 'rgba(239, 68, 68, 0.1)',
               tension: 0.4
             },
             {
               label: 'Sosyal',
-              data: exams.map(e => e.nets.sosyal),
+              data: exams.slice().reverse().map(e => e.nets.sosyal),
               borderColor: 'rgb(234, 179, 8)',
               backgroundColor: 'rgba(234, 179, 8, 0.1)',
               tension: 0.4
             },
             {
               label: 'Matematik',
-              data: exams.map(e => e.nets.matematik),
+              data: exams.slice().reverse().map(e => e.nets.matematik),
               borderColor: 'rgb(59, 130, 246)',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               tension: 0.4
             },
             {
               label: 'Fen',
-              data: exams.map(e => e.nets.fen),
+              data: exams.slice().reverse().map(e => e.nets.fen),
               borderColor: 'rgb(34, 197, 94)',
               backgroundColor: 'rgba(34, 197, 94, 0.1)',
               tension: 0.4
             },
             {
               label: 'Toplam',
-              data: exams.map(e => parseFloat(e.totalNet)),
+              data: exams.slice().reverse().map(e => parseFloat(e.totalNet)),
               borderColor: 'rgb(168, 85, 247)',
               backgroundColor: 'rgba(168, 85, 247, 0.1)',
               borderWidth: 3,
@@ -653,28 +940,20 @@
         },
         options: {
           responsive: true,
+          maintainAspectRatio: true,
           plugins: {
-            legend: {
-              position: 'top',
-            },
-            title: {
-              display: true,
-              text: 'Dersler Bazında Net Gelişimi'
-            }
+            legend: { position: 'top' }
           },
           scales: {
-            y: {
-              beginAtZero: true
-            }
+            y: { beginAtZero: true }
           }
         }
       });
 
-      // Doğru/Yanlış Grafiği
       const cwCtx = document.getElementById('correctWrongChart').getContext('2d');
       if (correctWrongChart) correctWrongChart.destroy();
 
-      const lastExam = exams[exams.length - 1];
+      const lastExam = exams[0];
       if (lastExam.details) {
         correctWrongChart = new Chart(cwCtx, {
           type: 'bar',
@@ -705,19 +984,16 @@
           },
           options: {
             responsive: true,
+            maintainAspectRatio: true,
             plugins: {
-              legend: {
-                position: 'top',
-              },
+              legend: { position: 'top' },
               title: {
                 display: true,
-                text: 'Son Sınav - Doğru/Yanlış Dağılımı'
+                text: 'Son Deneme - Doğru/Yanlış Dağılımı'
               }
             },
             scales: {
-              y: {
-                beginAtZero: true
-              }
+              y: { beginAtZero: true }
             }
           }
         });
