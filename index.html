@@ -109,6 +109,40 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 py-6">
+      <!-- Countdown Section -->
+      <div class="mb-6">
+        <div
+          class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-5 text-white shadow-lg relative overflow-hidden">
+          <!-- Decorative Background Elements -->
+          <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+          <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+
+          <div class="relative z-10">
+            <h2 class="text-center text-sm font-semibold mb-4 opacity-90 tracking-wide uppercase">🎓 YKS 2027'ye Kalan
+              Süre</h2>
+            <div class="flex justify-center gap-3 text-center">
+              <div class="bg-white/20 rounded-lg p-2 min-w-[70px] backdrop-blur-sm border border-white/10">
+                <div class="text-2xl font-bold font-mono" id="cd-days">--</div>
+                <div class="text-[10px] uppercase tracking-wider opacity-80 mt-1">Gün</div>
+              </div>
+              <div class="bg-white/20 rounded-lg p-2 min-w-[60px] backdrop-blur-sm border border-white/10">
+                <div class="text-2xl font-bold font-mono" id="cd-hours">--</div>
+                <div class="text-[10px] uppercase tracking-wider opacity-80 mt-1">Saat</div>
+              </div>
+              <div class="bg-white/20 rounded-lg p-2 min-w-[60px] backdrop-blur-sm border border-white/10">
+                <div class="text-2xl font-bold font-mono" id="cd-minutes">--</div>
+                <div class="text-[10px] uppercase tracking-wider opacity-80 mt-1">Dk</div>
+              </div>
+              <div class="bg-white/20 rounded-lg p-2 min-w-[60px] backdrop-blur-sm border border-white/10">
+                <div class="text-2xl font-bold font-mono" id="cd-seconds">--</div>
+                <div class="text-[10px] uppercase tracking-wider opacity-80 mt-1">Sn</div>
+              </div>
+            </div>
+            <div class="text-center mt-3 text-xs opacity-75" id="target-date-text"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Tab Navigation -->
       <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
         <button class="tab-btn active touch-btn" onclick="switchTab('exams')">🎯 Denemeler</button>
@@ -1004,6 +1038,43 @@
 
     loadExams();
     updateNets();
+
+    // 🎓 YKS Countdown Logic
+    // Hedef: 20 Haziran 2027 Saat 10:15 (Tahmini YKS 2027 Tarihi)
+    // Bugün (3 Şubat 2026) itibariyle yaklaşık 500+ gün var.
+    const YKS_DATE = new Date('2027-06-20T10:15:00').getTime();
+
+    // Tarihi formatlayıp ekrana yazalım
+    const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    document.getElementById('target-date-text').textContent = `Hedef: ${new Date(YKS_DATE).toLocaleDateString('tr-TR', dateOptions)}`;
+
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = YKS_DATE - now;
+
+      if (distance < 0) {
+        document.getElementById('cd-days').textContent = "0";
+        document.getElementById('cd-hours').textContent = "0";
+        document.getElementById('cd-minutes').textContent = "0";
+        document.getElementById('cd-seconds').textContent = "0";
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      document.getElementById('cd-days').textContent = days;
+      document.getElementById('cd-hours').textContent = String(hours).padStart(2, '0');
+      document.getElementById('cd-minutes').textContent = String(minutes).padStart(2, '0');
+      document.getElementById('cd-seconds').textContent = String(seconds).padStart(2, '0');
+    }
+
+    // Her saniye güncelle
+    setInterval(updateCountdown, 1000);
+    // İlk açılışta hemen çalıştır
+    updateCountdown();
   </script>
 </body>
 
